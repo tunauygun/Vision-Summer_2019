@@ -1,0 +1,7 @@
+Sünger
+High H: 38
+Low H:  22
+High S: 255
+Low S:  92
+High V: 255
+Low V: 117
