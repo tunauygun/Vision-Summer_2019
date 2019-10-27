@@ -2,113 +2,63 @@ import cv2
 import numpy as np
 import math
 
-# Lower ang Higher HSV Values
-L_Hue = 22
-H_Hue = 38
-L_Sat = 92
-H_Sat = 255
-L_Value = 117
-H_Value =  255
+# Read the image
+img = cv2.imread("CargoAngledDark48in.jpg", 1)
+originalImg = img.copy()
 
-cap = cv2.VideoCapture(0)
+# Convert image to HSV color space
+hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-while True:
+# Define the lower and upper HSV
+lower_hsv = np.array([63, 192, 126])
+upper_hsv = np.array([87, 255, 255])
 
-	# Grab the current frame
-	_, frame = cap.read()
-	
-	# Convert image to HSV color space
-	hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+# Blur the image. (parameters: image, (blue x, blur y) , 0)
+blur = cv2.GaussianBlur(hsv, (5,5) ,0)
 
-	# Define the lower and upper HSV
-	lower_hsv = np.array([L_Hue, L_Sat, L_Value])
-	upper_hsv = np.array([H_Hue, H_Sat, H_Value])
+# Convert the iamge to the HSV color space
+mask = cv2.inRange(blur, lower_hsv, upper_hsv)
 
-	# Blur the image. (parameters: image, (blue x, blur y) , 0)
-	blur = cv2.GaussianBlur(hsv, (5,5) ,0)
+kernel = np.ones((3,3), 'uint8')
+erode = cv2.erode(mask, kernel, iterations=2)
+dilate = cv2.dilate(erode, kernel, iterations=2)
 
-	# Convert the iamge to the HSV color space
-	mask = cv2.inRange(blur, lower_hsv, upper_hsv)
+contours, hierarchy = cv2.findContours(dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-	kernel = np.ones((3,3), 'uint8')
-	erode = cv2.erode(mask, kernel, iterations=2)
-	dilate = cv2.dilate(erode, kernel, iterations=2)
+targets = []
 
-	# Find Contours
-	contours, hierarchy = cv2.findContours(dilate, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+for cnt in contours:
+	rect = cv2.minAreaRect(cnt)
+	pts = cv2.boxPoints(rect)
+	pts = np.int0(pts)
+	cv2.drawContours(img, [pts], 0, (0 , 0, 255), 2)
 
-	index = -1
-	thickness = 4
-	color = (255,255,0)
+for i in range(len(contours)-1):
+    left = contours[i]
+    right = contours[i+1]
+    l_center, l_dimentions, l_angle = cv2.minAreaRect(left)
+    r_center, r_dimentions, r_angle = cv2.minAreaRect(right)
 
-	if len(contours) != 0:
-		# draw in blue the contours that were founded
-        #  cv2.drawContours(frame, contours, index, color, thickness)
+    if l_angle<=-70 and l_angle>=-80 and r_angle<=-10 and r_angle>=-20:
+        l_center_x, l_center_y = l_center
+        r_center_x, r_center_y = r_center
+        x_midPoint = int((l_center_x+r_center_x)/2)
+        y_midPoint = int((l_center_y+r_center_y)/2)
 
-		#find the biggest area
-		biggest = max(contours, key = cv2.contourArea)
+        targets.append((x_midPoint,y_midPoint))
 
-		x,y,w,h = cv2.boundingRect(biggest)
-		# draw the  contour in green
-		cv2.rectangle(frame,(x,y),(x+w,y+h),(0,255,0),2)
+print("Coordinates of the target:")
 
-		M = cv2.moments(biggest)
-		((cx, cy), radius) = cv2.minEnclosingCircle(biggest)
-		center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+for i in targets:
+	target_x, target_y = i
+	cv2.circle(img,(target_x, target_y), 5, (0,255,0), -1)
+	print("x:", target_x, " y:", target_y)
 
-		area = cv2.contourArea(biggest)
-##        print("Area: {}    Center: {}    Radius: {}    Width: {}    Height: {}" .format(area, center, int(radius),w,h))
 
-		# Calculate horizontal and vertical angle towards the target
-		H_angle = math.degrees(math.atan((int(M["m10"] / M["m00"])-320)/554.3))
-		V_angle = math.degrees(math.atan((int(M["m01"] / M["m00"])-240)/579.4))
 
-		# Print the angle on the camera window
-		font = cv2.FONT_HERSHEY_SIMPLEX
-		bottomLeftCornerOfText =(10,440)
-		fontScale = 0.6
-		fontColor = (0,255,255)
-		lineType = 2
-		cv2.putText(frame, "H: " + str(round(H_angle,2))+" degrees", bottomLeftCornerOfText, font, fontScale, fontColor, lineType)
-		cv2.putText(frame, "V: " + str(round(V_angle,2))+" degrees", (10,470), font, fontScale, fontColor, lineType)
+cv2.imshow("Original Img", originalImg)
+cv2.imshow("Img",img)
+cv2.imshow("Dilate",dilate)
 
-	cv2.imshow("Frame",frame)
-	cv2.imshow("Mask",mask)
-	#cv2.imshow("Erode",erode)
-	#cv2.imshow("Dilate",dilate)
-
-		
-	key = cv2.waitKey(1)
-	if key == 27:
-		print(hsv.shape)        
-		break
-
-cap.release()
+cv2.waitKey(0)
 cv2.destroyAllWindows()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

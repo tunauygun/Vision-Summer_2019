@@ -6,7 +6,7 @@ def nothing(x):
     pass
 
 # Read the image
-img = cv2.imread("RocketPanelStraightDark36in.jpg", 1)
+img = cv2.imread("CargoAngledDark48in.jpg", 1)
 print(img)
 
 cv2.namedWindow("Trackbars")
