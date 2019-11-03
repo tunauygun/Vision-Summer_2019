@@ -3,12 +3,12 @@ import numpy as np
 import math
 
 # Lower ang Higher HSV Values
-L_Hue = 73
-H_Hue = 106
-L_Sat = 87
-H_Sat = 232
-L_Value = 33
-H_Value = 255
+L_Hue = 58
+H_Hue = 91
+L_Sat = 132
+H_Sat = 255
+L_Value = 69
+H_Value = 180
 
 cap = cv2.VideoCapture(0)
 
@@ -63,7 +63,10 @@ while True:
     for i in targets:
         target_x, target_y = i
         cv2.circle(frame,(target_x, target_y), 5, (0,255,0), -1)
-        print("x:", target_x, " y:", target_y)
+        #print("x:", target_x, " y:", target_y)
+        displayInfo ="x: " + str(target_x) + "   y: " + str(target_y)
+        cv2.putText(frame, displayInfo, (10,470), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,255), 2)
+        
 
     cv2.imshow("Frame",frame)
     cv2.imshow("Dilate",dilate)
